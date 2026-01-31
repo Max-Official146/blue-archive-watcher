@@ -3,13 +3,13 @@ import time
 import cv2
 import os
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication, QWidget, QPushButton, QLabel, QVBoxLayout
 )
-from PyQt5.QtCore import QThread, pyqtSignal
-from core import ( detector as dect, notifier as notif, profiles as prof)
-from core.profiles import get_profile_dirs
+from PyQt6.QtCore import QThread, pyqtSignal
 
+from core import (detector as dect, notifier as notif, profiles as prof)
+from core.profiles import get_profile_dirs
 
 
 ACTIVE_PROFILE = "Blue Archive"
@@ -29,7 +29,7 @@ class MonitorThread(QThread):
         self.status.emit("Monitoring...")
 
         dirs = get_profile_dirs(ACTIVE_PROFILE)
-        
+
         latest_path = os.path.join(dirs["captures"], "latest.png")
         if os.path.exists(latest_path):
             os.remove(latest_path)
@@ -39,7 +39,6 @@ class MonitorThread(QThread):
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
         # do this ONCE, before the loop
-        dirs = prof.get_profile_dirs(ACTIVE_PROFILE)
         capture_path = os.path.join(dirs["captures"], "latest.png")
 
         while self.running:
@@ -98,7 +97,6 @@ class App(QWidget):
         dect.refrence_selector(ACTIVE_PROFILE)
         self.label.setText("Reference saved")
 
-
     def start(self):
         if not self.thread.isRunning():
             self.thread.start()
@@ -113,4 +111,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = App()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
