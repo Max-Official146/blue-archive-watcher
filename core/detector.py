@@ -129,3 +129,40 @@ def frame_comp(profile_name):
         _active_dialogue = None
 
     return False
+def crop_existing_reference(profile_name, ref_name):
+    from core.profiles import get_profile_dirs
+    import cv2
+    import os
+
+    dirs = get_profile_dirs(profile_name)
+    ref_path = os.path.join(dirs["references"], ref_name)
+
+    img = cv2.imread(ref_path)
+    if img is None:
+        return False
+
+    roi = cv2.selectROI(
+        "Select crop (ENTER to confirm, ESC to cancel)",
+        img,
+        fromCenter=False,
+        showCrosshair=True
+    )
+
+    x, y, w, h = roi
+    if w <= 0 or h <= 0:
+        cv2.destroyAllWindows()
+        return False
+
+    crop = img[y:y+h, x:x+w]
+
+    existing = [
+        f for f in os.listdir(dirs["references"])
+        if f.startswith(ref_name.replace(".png", "_crop"))
+    ]
+
+    crop_name = f"{ref_name.replace('.png', '')}_crop{len(existing)+1}.png"
+    crop_path = os.path.join(dirs["references"], crop_name)
+
+    cv2.imwrite(crop_path, crop)
+    cv2.destroyAllWindows()
+    return True
