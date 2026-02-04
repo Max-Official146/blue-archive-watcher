@@ -1,6 +1,4 @@
-# >.<
-🟦 FrameTrace
-
+# FrameTrace >.<
 Visual state monitoring & detection tool
 
 by Stella Group ✨
