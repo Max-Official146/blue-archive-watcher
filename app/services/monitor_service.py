@@ -52,26 +52,18 @@ class MonitorService(QThread):
 
         cap = None
         try:
-            available_indices = self._list_available_camera_indices()
-            if not has_profile_camera_index(profile):
-                if not available_indices:
-                    self.status.emit("Camera failed")
-                    return
-                camera_index = available_indices[0]
-                set_profile_camera_index(profile, camera_index)
-            else:
-                camera_index = get_profile_camera_index(profile)
-                if camera_index not in available_indices:
-                    self.status.emit("Camera failed")
-                    return
-
-            cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
+            cap = cv2.VideoCapture(
+                "video=OBS Virtual Camera",
+                cv2.CAP_FFMPEG,
+            )
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
             cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
             if not cap.isOpened():
                 self.status.emit("Camera failed")
                 return
+
+            logging.info("Using OBS Virtual Camera via FFmpeg backend")
 
             while self.running:
                 ret, frame = cap.read()
