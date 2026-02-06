@@ -189,8 +189,7 @@ def frame_comp_from_array(profile_name, frame, state, persist_capture=False):
         return False
 
     profile_valid = os.path.isdir(profile_path(profile_name))
-    if persist_capture:
-        _save_capture_snapshot(profile_name, frame, state)
+    _save_capture_snapshot(profile_name, frame, state, force=False)
 
     frame_gray = (
         cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
