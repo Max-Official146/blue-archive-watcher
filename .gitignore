@@ -1,19 +1,30 @@
-# ---------- Python ----------
-__pycache__/
-*.pyc
-
-# ---------- Virtual env ----------
-venv/
-.venv/
-
-# ---------- Runtime profile data ----------
+# ---------- Runtime user data ----------
 Data/Profiles/**
+Data/Debug/**
+
+# Keep empty folders
 !Data/Profiles/.gitkeep
-
-Data/Profiles/**/captures/
-Data/Profiles/**/debug/
-Data/Profiles/**/references/
-
+!Data/Debug/.gitkeep
 # ---------- IDE ----------
 .vscode/
 .idea/
+
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+.venv/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# VS Code
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db

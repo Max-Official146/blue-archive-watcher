@@ -1,0 +1,4 @@
+PyQt6>=6.5
+opencv-python>=4.8
+plyer>=2.1
+pyinstaller>=6.0
