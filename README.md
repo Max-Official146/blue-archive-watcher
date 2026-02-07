@@ -1,34 +1,68 @@
 # FrameTrace >.<
-Visual state monitoring & detection tool
 
-by Stella Group ✨
+**Visual state monitoring & detection tool**  
+by **Stella Group** ✨
 
-“Stop staring at the screen. Let FrameTrace do it.”
+> “Stop staring at the screen. Let FrameTrace do it.”
 
-👀 What is FrameTrace?
+---
 
-FrameTrace is a profile-based visual monitoring desktop app.
+## 👀 What is FrameTrace?
 
-It watches a live video input (via OBS Virtual Camera), compares what it sees against user-defined visual references, and alerts you when a specific visual state appears.
+FrameTrace is a **profile-based visual monitoring desktop application**.
 
-It is:
+It watches a live video input (typically via **OBS Virtual Camera**), compares what it sees against **user-defined visual references**, and alerts you when a specific visual state appears on screen.
 
-🧠 deterministic (no mystery logic)
+Everything runs **locally**:
+- no cloud services
+- no accounts
+- no background uploads
+- no hidden automation
 
-🧱 modular (layers matter)
+---
 
-🧹 safe with files (nothing important gets overwritten)
+## ✨ Design Philosophy
 
-😴 boring to extend (this is a feature)
+FrameTrace is intentionally:
 
-FrameTrace is not game-specific, not cloud-based, and not AI hype.
+- 🧠 **Deterministic** — no black-box AI, no mystery behavior  
+- 🧱 **Modular** — clear separation between UI, detection, and data  
+- 🧹 **Safe with files** — user data is never overwritten during updates  
+- 😴 **Boring to extend** — predictable code paths by design  
+
+FrameTrace is **not game-specific**, **not cloud-based**, and **not AI hype**.  
 It’s a local, power-user tool for people who want control.
-## Detection + artifact persistence
 
-- Monitoring now runs detection directly against in-memory camera frames (`frame_comp_from_array`) to avoid per-cycle disk round-trips.
-- File-based detection (`frame_comp`) remains available for manual/debug workflows that intentionally operate on `captures/latest.png`.
-- Capture persistence is optional and throttled via `core/detector.py::ARTIFACT_POLICY`.
-  - `capture_snapshot_interval_s`: minimum interval for periodic snapshots.
-  - `capture_retention_count`: max number of `captures/snapshot_*.png` files retained.
-  - `debug_retention_count`: max number of `debug/match_*.png` files retained.
-- A forced capture snapshot is also recorded when a new detection event starts, then retention is enforced.
+---
+
+## 🎯 Detection & Artifact Persistence
+
+- Monitoring runs detection directly against **in-memory camera frames** using  
+  `frame_comp_from_array`, avoiding per-cycle disk round-trips.
+- File-based detection (`frame_comp`) remains available for manual and debug
+  workflows that intentionally operate on `captures/latest.png`.
+
+### Capture & Debug Retention
+
+Artifact persistence is **optional, throttled, and bounded**.
+
+Retention behavior is configured in `core/detector.py`:
+
+- `capture_snapshot_interval_s` — minimum interval between capture snapshots  
+- `capture_retention_count` — maximum retained `captures/snapshot_*.png` files  
+- `debug_retention_count` — maximum retained `debug/match_*.png` files  
+
+Additional behavior:
+- A forced capture snapshot is recorded when a **new detection event starts**
+- Retention rules are enforced immediately after capture
+
+This guarantees:
+- no unbounded disk growth
+- predictable storage usage
+- safe long-running sessions
+
+---
+
+## 💾 Data & Updates
+
+All user data is stored in the `Data/` folder next to the executable:
