@@ -94,7 +94,7 @@ class MonitorService(QThread):
                         logging.error("Detection crash", exc_info=True)
                         continue
 
-                    time.sleep(0.05)
+                    self.msleep(50)
             finally:
                 if cap is not None:
                     cap.release()

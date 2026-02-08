@@ -1,6 +1,5 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QPushButton, QWidget
-
+from PyQt6.QtWidgets import QLabel, QPushButton, QWidget, QSizePolicy
 from app.ui.theme import Styles
 
 
@@ -15,17 +14,25 @@ def disable_button_focus_rect(button: QPushButton):
     """Disable focus rectangle on button while keeping it clickable."""
     button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
-
 def make_preview_label(
     text: str = "",
     min_height: int = 220,
     object_name: str = "preview_label",
 ) -> QLabel:
-    """Create a configured preview label with non-interactive behavior."""
+    """Create a configured preview label with fixed-size preview behavior."""
     label = QLabel(text)
     label.setObjectName(object_name)
+
     label.setAlignment(Qt.AlignmentFlag.AlignCenter)
     label.setMinimumHeight(min_height)
+    label.setMaximumHeight(min_height)
+
+    label.setScaledContents(False)
+    label.setSizePolicy(
+        QSizePolicy.Policy.Expanding,
+        QSizePolicy.Policy.Fixed,
+    )
+
     label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
     label.setFocusPolicy(Qt.FocusPolicy.NoFocus)
     label.setStyleSheet(Styles.preview_label(object_name))

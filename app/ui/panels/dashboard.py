@@ -272,8 +272,9 @@ class DashboardPanel(QWidget):
         _, threshold = self.STRICTNESS_OPTIONS[index]
         update_profile_detection_threshold(profile, threshold)
 
-
     def update_camera_indices(self):
+        from app.workers.camera_workers import CameraProbeWorker
+
         profile = app_state.active_profile
         self.camera_combo.blockSignals(True)
         self.camera_combo.clear()
@@ -283,18 +284,36 @@ class DashboardPanel(QWidget):
             self.camera_combo.setEnabled(False)
             return
 
-        if self._cached_available_camera_indices is None:
-            self._cached_available_camera_indices = self.monitor.list_available_camera_indices()
-
         current_index = get_profile_camera_index(profile)
+
+        if self._cached_available_camera_indices is None:
+            self.camera_combo.addItem("Scanning cameras...")
+            self.camera_combo.setEnabled(False)
+
+            if current_index is not None:
+                self.camera_combo.addItem(str(current_index), current_index)
+                self.camera_combo.setCurrentIndex(1)
+
+            self._camera_probe_worker = CameraProbeWorker()
+            self._camera_probe_worker.cameraIndicesReady.connect(
+                self._on_camera_indices_ready
+            )
+            self._camera_probe_worker.start()
+
+            self.camera_combo.blockSignals(False)
+            return
+
         options = list(self._cached_available_camera_indices)
         if current_index not in options:
             options.append(current_index)
+
         for idx in sorted(set(options)):
             self.camera_combo.addItem(str(idx), idx)
+
         selected = self.camera_combo.findData(current_index)
         if selected >= 0:
             self.camera_combo.setCurrentIndex(selected)
+
         self.camera_combo.blockSignals(False)
         self.camera_combo.setEnabled(self.camera_combo.count() > 0)
 
@@ -309,12 +328,15 @@ class DashboardPanel(QWidget):
             return
         set_profile_camera_index(profile, camera_index)
         self.capture_camera_snapshot()
-
+    
     def capture_camera_snapshot(self):
+        from app.workers.camera_workers import CameraSnapshotWorker
+
         if app_state.monitoring_active:
             self.camera_preview.setPixmap(QPixmap())
             self.camera_preview.setText("Snapshot paused while monitoring")
             return
+
         if not self.isVisible():
             return
 
@@ -325,50 +347,13 @@ class DashboardPanel(QWidget):
             return
 
         camera_index = get_profile_camera_index(profile)
-        # One-shot snapshots avoid camera contention with monitoring capture and keep UI threading simple.
-        cap = cv2.VideoCapture(camera_index)
-        try:
-            if not cap.isOpened():
-                self.camera_preview.setPixmap(QPixmap())
-                self.camera_preview.setText(f"No signal from camera {camera_index}")
-                return
+        self.camera_preview.setText("Loading...")
 
-            ok, frame = cap.read()
-            if not ok:
-                self.camera_preview.setPixmap(QPixmap())
-                self.camera_preview.setText(f"No signal from camera {camera_index}")
-                return
-        finally:
-            cap.release()
+        self._snapshot_worker = CameraSnapshotWorker(camera_index)
+        self._snapshot_worker.snapshotReady.connect(self._on_snapshot_ready)
+        self._snapshot_worker.snapshotFailed.connect(self._on_snapshot_failed)
+        self._snapshot_worker.start()
 
-        max_preview_width = 420
-        height, width = frame.shape[:2]
-        if width > max_preview_width:
-            scale = max_preview_width / float(width)
-            frame = cv2.resize(
-                frame,
-                (max_preview_width, max(1, int(height * scale))),
-                interpolation=cv2.INTER_AREA,
-            )
-
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        height, width, channels = frame.shape
-        image = QImage(frame.data, width, height, channels * width, QImage.Format.Format_RGB888).copy()
-
-        painter = QPainter(image)
-        painter.setPen(QPen(Qt.GlobalColor.white))
-        painter.drawText(10, 24, f"Camera Index: {camera_index}")
-        painter.end()
-
-        pixmap = QPixmap.fromImage(image)
-        self.camera_preview.setPixmap(
-            pixmap.scaled(
-                self.camera_preview.size(),
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-        )
-        self.camera_preview.setText("")
 
     def update_profile_preview(self):
         if not app_state.active_profile:
@@ -407,3 +392,22 @@ class DashboardPanel(QWidget):
                 Qt.TransformationMode.SmoothTransformation,
             )
         )
+
+    def _on_camera_indices_ready(self, indices):
+        self._cached_available_camera_indices = indices
+        self.update_camera_indices()
+
+    def _on_snapshot_ready(self, image):
+        pixmap = QPixmap.fromImage(image)
+        self.camera_preview.setPixmap(
+            pixmap.scaled(
+                self.camera_preview.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+        )
+        self.camera_preview.setText("")
+
+    def _on_snapshot_failed(self, message):
+        self.camera_preview.setPixmap(QPixmap())
+        self.camera_preview.setText(message)

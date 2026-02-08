@@ -1,8 +1,9 @@
 import json
 import os
-
+from datetime import datetime
 import cv2
-from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QPushButton, QWidget, QVBoxLayout
 
 from app.app_state import app_state
 from app.ui.panel_header import PanelHeader
@@ -69,14 +70,23 @@ class CropPanel(QWidget):
         x0, y0 = int(x / scale), int(y / scale)
         x1, y1 = int((x + w) / scale), int((y + h) / scale)
         crop = img[y0:y1, x0:x1]
+
         base = os.path.splitext(frame)[0]
-
         refs_dir = dirs["references"]
-        existing = [f for f in os.listdir(refs_dir) if f.startswith(base) and f.endswith(".png")]
 
-        ref_name = f"{base}_ref{len(existing)+1}.png"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        existing = [
+            f for f in os.listdir(refs_dir)
+            if f.startswith(f"{base}__ref_{timestamp}") and f.endswith(".png")
+        ]
+
+        counter = len(existing) + 1
+        ref_name = f"{base}__ref_{timestamp}_{counter:02d}.png"
         ref_path = os.path.join(refs_dir, ref_name)
+
         cv2.imwrite(ref_path, crop)
+        
 
         meta_path = ref_path.replace(".png", ".json")
         with open(meta_path, "w") as f:

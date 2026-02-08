@@ -123,8 +123,21 @@ class ReferencesPanel(QWidget):
             f"Selected reference: {app_state.selected_reference}" if app_state.selected_reference else "Selected reference: None"
         )
         self.update_preview(app_state.selected_reference)
-
+    
     def select_reference(self, ref_name):
+        # Toggle deselect if clicking the already-selected reference
+        if app_state.selected_reference == ref_name:
+            app_state.selected_reference = None
+
+            if self.selected_btn:
+                self.selected_btn.setStyleSheet(Styles.button())
+                self.selected_btn = None
+
+            self.update_preview(None)
+            self.info_label.setText("Selected reference: None")
+            return
+
+        # Normal select path
         success, message = self.reference_controller.select_reference(ref_name)
         if not success:
             QMessageBox.warning(self, "Select Reference", message)
@@ -132,8 +145,10 @@ class ReferencesPanel(QWidget):
 
         self.update_preview(ref_name)
         self.info_label.setText(f"Selected reference: {ref_name}")
+
         if self.selected_btn:
             self.selected_btn.setStyleSheet(Styles.button())
+
         self.selected_btn = self.sender()
         self.selected_btn.setStyleSheet(Styles.selected_button())
 
