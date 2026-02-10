@@ -82,6 +82,10 @@ def get_profile_dirs(profile_name):
 
 
 def migrate_profile_assets(profile_name):
+    #note:
+    # This migration is intentionally idempotent and may run multiple times
+    # during profile listing in V1. This is acceptable for now.
+    # Future versions may gate or cache this to reduce filesystem scans.
     """Populate SQLite with filesystem-only frames/references and prune missing entries."""
     if not profile_name:
         return

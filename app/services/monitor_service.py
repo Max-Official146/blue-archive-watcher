@@ -235,10 +235,16 @@ class MonitorService(QThread):
 
     def stop(self):
         """Stop capture + processing and release subprocess resources."""
+        if self._stop_event.is_set():
+            return
         self._stop_event.set()
+
         if self._capture and self._capture_acquired:
             _release_global_capture()
             self._capture_acquired = False
+
         if self._processing_thread and self._processing_thread.is_alive():
             self._processing_thread.join(timeout=5)
+
         app_state.monitoring_active = False
+
